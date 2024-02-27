@@ -1,8 +1,6 @@
 ---
 title: "**Project_Group9**"
-author: "Akshatha Ganji
-         Sree Ram Charan Pammi  
-         Kodi Manu Aithal"
+author: "Akshatha Ganji"
 date: "2023-04-21"
 output: html_document
 ---
