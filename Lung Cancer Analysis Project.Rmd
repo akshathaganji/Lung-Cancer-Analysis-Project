@@ -1,0 +1,247 @@
+---
+title: "**Project_Group9**"
+author: "Akshatha Ganji
+         Sree Ram Charan Pammi  
+         Kodi Manu Aithal"
+date: "2023-04-21"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r message=FALSE}
+# Import needed packages
+library(tidyverse)
+library(ggplot2) 
+library(tigerstats) 
+library(reticulate)
+library(MASS)
+library(MLmetrics)
+library(dplyr)
+```
+
+```{r}
+LungCancer<- read.csv("C:/Users/aksha/Downloads/archive/survey lung cancer.csv", sep=",")
+view(LungCancer)
+summary(LungCancer)
+```
+
+
+```{r}
+dim(LungCancer)
+```
+The lung cancer data set has 309 rows and 16 columns.
+
+```{r}
+str(LungCancer)
+```
+
+The data types covered are int and character .
+It has fourteen  numerical attribute and two strings.
+
+```{r}
+sum(is.na(LungCancer))
+```
+There are no missing values in the dataset.
+
+```{r}
+mean(LungCancer$AGE)
+min(LungCancer$AGE)
+max(LungCancer$AGE)
+```
+The average age of lung cancer patients is around 62.7.
+The youngest person to acquire lung cancer in the given data set is 21 , whereas the eldest is around the age of 87.
+
+This proves that there must be additional factors contributing to the presence of lung cancer in the population sample given.
+
+```{r}
+df <- data.frame(
+  x = c(LungCancer$SMOKING),
+  y = c(LungCancer$YELLOW_FINGERS),
+  z = c(LungCancer$ANXIETY),
+  a=c(LungCancer$PEER_PRESSURE),
+  b=c(LungCancer$CHRONIC.DISEASE),
+  d=c(LungCancer$FATIGUE)
+)
+num_2 <- sapply(df, function(col) sum(col == 2))
+
+# Print the number of 2 values in each column
+print(num_2)
+```
+
+It shows that the predominant feature that might be  contributing to the lung cancer is fatigue since it is seen in larger value of the population.
+
+
+**EXPLORATORY DATA ANALYSIS**
+
+
+**HISTOGRAM**
+
+```{r}
+hist(LungCancer$AGE, breaks = 20, col = "blue", main = "Histogram of AGE",xlab="AGE")
+```
+It depicts the age attribute in which the population is normally distributed around the age  40-90.
+
+**BOXPLOT**
+```{r}
+boxplot(LungCancer$AGE, horizontal = FALSE,col = "green")
+```
+In the box plot above it depicts that the median age value lies around 62, there are a few outliers that range around 20 and 38 , the maximum value goes up-to 87.The first quantile ranges from 40-58, the middle 50% quantile ranges from  58-70 covering the median value,the last quantile ranges from 68-87.
+
+**BARPLOT**
+```{r}
+barplot(table(LungCancer$GENDER))
+```
+There are more male who have been taken into consideration  for the sample space, than the number of female.
+
+**SCATTERPLOT**
+```{r}
+ggplot(data = LungCancer) +
+  geom_point(mapping = aes(x = AGE, y = FATIGUE, colour = LUNG_CANCER))
+```
+The scatter plot here depicts the attributes fatigue,age and lung_cancer.It shows how fatigue acts a pivotal role in presence of lung cancer in them.
+
+**OVERLAY HISTOGRAM**
+
+```{r}
+ggplot(LungCancer, aes(x = AGE, fill = LUNG_CANCER)) +
+  geom_histogram(alpha = 0.5, position = "identity", bins = 30) +
+  labs(title = "Histogram of Age by Gender", x = "Age", y = "Frequency") +
+  scale_fill_manual(values = c("blue", "pink"))
+```
+It shows a depiction of age and their frequencies of that age in the population and the 
+
+**Hypothesis Test:**
+
+
+
+
+Null Hypothesis: There is no difference in variances between the two genders.
+
+```{r}
+male_age <- LungCancer[LungCancer$GENDER == "M", "AGE"]
+female_age <- LungCancer[LungCancer$GENDER == "F", "AGE"]
+var.test(male_age,female_age)
+```
+The F-test compares the variances of two samples to determine whether they are statistically different. The output shows that the p-value is 0.01864, which is less than the significance level of 0.05. Therefore, we can reject the null hypothesis that the variances of the two groups are equal.
+
+The alternative hypothesis is that the true ratio of variances is not equal to 1. The 95% confidence interval for the ratio of variances is (0.4967864, 0.9382978), which does not include 1. This further supports the rejection of the null hypothesis.
+
+In conclusion, we can reject the null hypothesis and conclude that the variances of the male and female age groups are statistically different.
+
+
+Null Hypothesis: There is no difference in mean age of between the two genders.
+
+```{r}
+# Subset data set by gender
+male_age <- LungCancer[LungCancer$GENDER == "M", "AGE"]
+female_age <- LungCancer[LungCancer$GENDER == "F", "AGE"]
+
+# Conduct two-sample t-test
+t.test(male_age, female_age, var.equal = FALSE)
+```
+The output shows that the p-value is 0.7091, which is greater than the significance level of 0.05. Therefore, we do not have enough evidence to reject the null hypothesis that there is no significant difference in the mean age between males and females in the LungCancer dataset.
+The 95% confidence interval for the difference in means (-1.493154, 2.192574) includes 0, which is consistent with the null hypothesis.
+Therefore, we cannot reject the null hypothesis
+
+**Simple Linear Regression**
+```{r}
+train_index = sample(2,nrow(LungCancer),replace=TRUE, prob = c(0.8,0.2))
+LungTraining <- LungCancer[train_index==1,]
+LungTest <- LungCancer[train_index==2,]
+dim(LungTraining)
+dim(LungTest)
+```
+Dividing the dataset into two parts.
+
+Regression:Modelling the relationship between dependent variable and one or more independent variables.
+
+
+```{r}
+# Perform a simple linear regression with "age" as the predictor variable and "bronchitis" as the response variable
+lm_model <- lm(COUGHING ~ AGE, data = LungTraining)
+
+# Print the summary of the linear regression model
+summary(lm_model)
+```
+
+
+In summary, the linear regression model shows that there is a statistically significant positive relationship between age and coughing in lung cancer patients.
+
+```{r}
+predictions <- predict(lm_model, newdata = LungTest)
+summary(predictions)
+# Calculate the mean absolute error (MAE)
+MAE(y_pred = predictions, y_true = LungTest$COUGHING)
+# Calculate the mean squared error (MSE)
+MSE(y_pred = predictions, y_true = LungTest$COUGHING)
+```
+
+MAE: Mean absolute error, measure of average mistake in a collection of prediction.
+MSE:Average squared difference between estimated values and actual value.
+
+Multiple Linear Regression:
+```{r}
+mlm_model <- lm(COUGHING ~ ., data = LungTraining)
+# Print the summary of the multiple linear regression model
+summary(mlm_model)
+```
+The model indicates that the contributing factors to coughing is age, yellow fingers,allergy,wheezing,shortness of breath.
+
+
+```{r}
+summary(mlm_model)
+```
+
+
+
+```{r}
+predict <- predict(mlm_model, newdata =LungTest)
+summary(predict)
+MAE(y_pred = predictions, y_true = LungTest$COUGHING)
+MSE(y_pred = predictions, y_true = LungTest$COUGHING)
+```
+
+### Forward Stepwise
+
+
+```{r}
+library(MASS)
+# Create a null model 
+intercept_only <- lm(COUGHING ~ 1, data=LungTraining)
+# Create a full model
+all <- lm(COUGHING~., data=LungTraining)
+# perform forward step-wise regression
+forward <- stepAIC (intercept_only, direction='forward',scope = formula(all))
+```
+```{r}
+forward$anova
+```
+
+```{r}
+summary(forward)
+```
+
+```{r}
+library(ISLR)
+ypred_forward <-predict(object = forward, newdata = LungTest)
+MAE(y_pred = ypred_forward, y_true = LungTest$COUGHING)
+MSE(y_pred = ypred_forward, y_true = LungTest$COUGHING)
+```
+## Backward Stepwise:
+```{r}
+backward <- stepAIC (all, direction='backward')
+summary(backward)
+```
+```{r}
+library(ISLR)
+ypred_backward <-predict(object = backward, newdata = LungTest)
+MAE(y_pred = ypred_backward, y_true = LungTest$COUGHING)
+MSE(y_pred = ypred_backward, y_true = LungTest$COUGHING)
+```
+
+Seeing all the regression models, we can conclude that the forward and backward stepwise regression model is best fit model
+
+
